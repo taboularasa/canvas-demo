@@ -57,10 +57,10 @@ let addCircle = (point, radius, stage) => {
   stage.addChild(circle)
 }
 
-let freshCanvas = (width, height, stage, container) => {
+let freshCanvas = (width, height, stage) => {
   stage.removeAllChildren();
-  container.innerHTML=`<canvas id='main-canvas' width='${width}' height='${height}'></canvas>`;
-  stage.canvas = document.getElementById("main-canvas");
+  stage.canvas.width = width;
+  stage.canvas.height = height;
 }
 
 let draw = () => {
@@ -70,7 +70,7 @@ let draw = () => {
   let step = width / NUMBER_OF_WORK_HOURS;
   var points = [];
 
-  freshCanvas(width, height, stage, container);
+  freshCanvas(width, height, stage);
 
   for (var i = 0; i < NUMBER_OF_WORK_HOURS; i ++) {
     let newY = mapRange(minShipments, maxShipments, height - MARGIN, MARGIN, mappedData[i].shipments);
@@ -89,6 +89,11 @@ let draw = () => {
   }
 
   for (let p of points) { addCircle(p, 5, stage); }
+  var htmlElement = document.getElementById("testie");
+  var domElement = new createjs.DOMElement(htmlElement);
+  domElement.x = points[0][0] - (htmlElement.offsetWidth / 2);
+  domElement.y = height;
+  stage.addChild(domElement)
 
   stage.update();
 }
