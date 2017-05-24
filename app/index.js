@@ -43,10 +43,10 @@ const mappedData = Object.keys(rawData).map(dataMap).filter(Boolean);
 const minShipments = Math.min(...mappedData.map(x => x.shipments));
 const maxShipments = Math.max(...mappedData.map(x => x.shipments))
 
-let addLine = (from, to, stroke, stage) => {
+let addLine = (from, to, strokeWeight, strokeColor, stage) => {
   let g = new createjs.Graphics();
-  g.setStrokeStyle(stroke);
-  g.beginStroke("#666666");
+  g.setStrokeStyle(strokeWeight);
+  g.beginStroke(strokeColor);
   g.moveTo(...from).lineTo(...to);
   stage.addChild(new createjs.Shape(g));
 }
@@ -57,14 +57,33 @@ let addCircle = (point, radius, stage) => {
   stage.addChild(circle)
 }
 
+let newElement = (tag, id, classes, content) => {
+  var el = document.createElement(tag)
+  el.id = id;
+  el.classList.add(classes)
+  el.innerHTML = content;
+  return el;
+}
+
+let newDomElement = (tag, id, classes, content, container) => {
+  let el = newElement(tag, id, classes, content)
+  container.prepend(el);
+  let domElement = new createjs.DOMElement(el);
+  return domElement;
+}
+
 let newBottomAxisTic = (i, x, y, container) => {
-  var span = document.createElement('span')
-  span.innerHTML = mappedData[i].hourLabel;
-  span.id = `label-${i}`;
-  container.prepend(span);
-  let domElement = new createjs.DOMElement(span);
-  domElement.x = x - (span.offsetWidth / 2);
+  let domElement = newDomElement('span', `bottom-label-${i}`, 'tic', mappedData[i].hourLabel, container)
+  domElement.x = x - (domElement.htmlElement.offsetWidth / 2);
   domElement.y = y;
+  stage.addChild(domElement);
+  return domElement;
+}
+
+let newTopAxisTic = (i, x, y, container) => {
+  let domElement = newDomElement('span', `top-label-${i}`, 'tic', mappedData[i].shipments, container)
+  domElement.x = x - (domElement.htmlElement.offsetWidth / 2);
+  domElement.y = y - domElement.htmlElement.offsetHeight;
   stage.addChild(domElement);
   return domElement;
 }
@@ -92,14 +111,15 @@ let draw = () => {
     let newY = mapRange(minShipments, maxShipments, height - MARGIN, MARGIN, mappedData[i].shipments);
     let newX = parseInt(i * step + MARGIN);
     points.push([newX, newY]);
+    domElements.push(newTopAxisTic(i, newX, 0, container));
     domElements.push(newBottomAxisTic(i, newX, height, container));
   }
 
-  for (let p of points) { addLine([p[0], 0],[p[0], height], 1, stage); }
+  for (let p of points) { addLine([p[0], 0],[p[0], height], 1, "#CCC", stage); }
 
   var previousPoint;
   for (let p of points) {
-    if (previousPoint) { addLine(previousPoint, p, 3, stage) }
+    if (previousPoint) { addLine(previousPoint, p, 3, "#666", stage) }
     previousPoint = p;
   }
 
