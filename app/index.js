@@ -1,5 +1,5 @@
 const NUMBER_OF_WORK_HOURS = 11;
-const MARGIN = 5;
+const MARGIN = 10;
 
 let moment = require('moment');
 let stage = new createjs.Stage('main-canvas');
