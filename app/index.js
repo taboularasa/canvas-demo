@@ -3,6 +3,7 @@ const MARGIN = 5;
 
 let moment = require('moment');
 let stage = new createjs.Stage('main-canvas');
+let domElements = [];
 stage.regX = -0.5;
 stage.regY = -0.5;
 
@@ -34,7 +35,7 @@ let dataMap = (key, index) => {
   let shipments = Object.values(rawData)[index];
   if (shipments == 0) { return };
   let hour = +key;
-  let hourLabel = moment(key, 'h').format('hh:mm a');
+  let hourLabel = moment(key, 'h').format('h a');
 
   return { 'hour': hour, 'hourLabel': hourLabel, 'shipments': shipments };
 };
@@ -42,23 +43,38 @@ const mappedData = Object.keys(rawData).map(dataMap).filter(Boolean);
 const minShipments = Math.min(...mappedData.map(x => x.shipments));
 const maxShipments = Math.max(...mappedData.map(x => x.shipments))
 
-let addLine = (from, to, stage) => {
+let addLine = (from, to, stroke, stage) => {
   let g = new createjs.Graphics();
-  g.setStrokeStyle(1);
+  g.setStrokeStyle(stroke);
   g.beginStroke("#666666");
-  g.beginFill("green");
   g.moveTo(...from).lineTo(...to);
   stage.addChild(new createjs.Shape(g));
 }
 
 let addCircle = (point, radius, stage) => {
   var circle = new createjs.Shape()
-  circle.graphics.beginFill("Green").drawCircle(...point, radius);
+  circle.graphics.beginFill("#9BC988").drawCircle(...point, radius);
   stage.addChild(circle)
+}
+
+let newBottomAxisTic = (i, x, y, container) => {
+  var span = document.createElement('span')
+  span.innerHTML = mappedData[i].hourLabel;
+  span.id = `label-${i}`;
+  container.prepend(span);
+  let domElement = new createjs.DOMElement(span);
+  domElement.x = x - (span.offsetWidth / 2);
+  domElement.y = y;
+  stage.addChild(domElement);
+  return domElement;
 }
 
 let freshCanvas = (width, height, stage) => {
   stage.removeAllChildren();
+  for (let el of domElements) {
+    el.htmlElement.parentNode.removeChild(el.htmlElement);
+  }
+  domElements = []
   stage.canvas.width = width;
   stage.canvas.height = height;
 }
@@ -75,25 +91,19 @@ let draw = () => {
   for (var i = 0; i < NUMBER_OF_WORK_HOURS; i ++) {
     let newY = mapRange(minShipments, maxShipments, height - MARGIN, MARGIN, mappedData[i].shipments);
     let newX = parseInt(i * step + MARGIN);
-    let newPoint = [newX, newY];
-
-    points.push(newPoint);
+    points.push([newX, newY]);
+    domElements.push(newBottomAxisTic(i, newX, height, container));
   }
 
-  for (let p of points) { addLine([p[0], 0],[p[0], height], stage); }
+  for (let p of points) { addLine([p[0], 0],[p[0], height], 1, stage); }
 
   var previousPoint;
   for (let p of points) {
-    if (previousPoint) { addLine(previousPoint, p, stage) }
+    if (previousPoint) { addLine(previousPoint, p, 3, stage) }
     previousPoint = p;
   }
 
-  for (let p of points) { addCircle(p, 5, stage); }
-  var htmlElement = document.getElementById("testie");
-  var domElement = new createjs.DOMElement(htmlElement);
-  domElement.x = points[0][0] - (htmlElement.offsetWidth / 2);
-  domElement.y = height;
-  stage.addChild(domElement)
+  for (let p of points) { addCircle(p, 7, stage); }
 
   stage.update();
 }
